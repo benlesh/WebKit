@@ -1,0 +1,4 @@
+
+PASS Observable.from recognizes foreign-realm native observables and promises
+PASS An inactive document neither delivers notifications nor invokes teardown script
+

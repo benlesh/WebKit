@@ -1,0 +1,3 @@
+[Exposed=Window, ConstructorWithoutParent] interface TestConstructorWithoutParent : TestConstructorWithoutParentParent {
+    constructor();
+};

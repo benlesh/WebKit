@@ -1,0 +1,23 @@
+
+PASS Observable: callback construction is lazy
+PASS Observable: configuration construction is lazy
+PASS Observable: rejects undefined
+PASS Observable: rejects null
+PASS Observable: rejects empty configuration
+PASS Observable: rejects non-callable producer
+PASS Observable: rejects number
+PASS Observable: an already-aborted observation never invokes the producer
+PASS SharedObservable: callback construction is lazy
+PASS SharedObservable: configuration construction is lazy
+PASS SharedObservable: rejects undefined
+PASS SharedObservable: rejects null
+PASS SharedObservable: rejects empty configuration
+PASS SharedObservable: rejects non-callable producer
+PASS SharedObservable: rejects number
+PASS SharedObservable: an already-aborted observation never invokes the producer
+PASS Observable: overlapping subscriptions have independent producers and cancellation
+PASS Observable: producer-selected closure affects neither siblings nor future subscriptions
+PASS SharedObservable exposes observation without producer termination methods or static from
+PASS Observable: Promise-returning consumption methods are omitted
+PASS SharedObservable: Promise-returning consumption methods are omitted
+

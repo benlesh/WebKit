@@ -55,6 +55,8 @@ public:
 
     virtual void visitAdditionalChildrenInGCThread(JSC::AbstractSlotVisitor&) const = 0;
 
+    void deactivate() { m_active = false; }
+
     void setSubscriber(Subscriber& subscriber) { m_subscriber = subscriber; }
     Subscriber* subscriber() const { return m_subscriber.get(); }
 
@@ -75,3 +77,4 @@ private:
 };
 
 } // namespace WebCore
+

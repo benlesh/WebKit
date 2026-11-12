@@ -36,6 +36,7 @@
 #include "Subscriber.h"
 #include "SubscriberCallback.h"
 #include <JavaScriptCore/JSCJSValueInlines.h>
+#include <JavaScriptCore/SlotVisitorInlines.h>
 #include <JavaScriptCore/TopExceptionScope.h>
 
 namespace WebCore {
@@ -84,6 +85,9 @@ public:
                 }
             }
 
+            if (!subscriber.isActive())
+                return { };
+
             Ref inspect = InternalObserverInspect::create(*context, subscriber, ObservableInspector { m_inspector });
             Ref { m_sourceObservable }->subscribeInternal(*context, WTF::move(inspect), SubscribeOptions { &subscriber.signal() });
 
@@ -93,6 +97,23 @@ public:
         CallbackResult<void> invokeRethrowingException(Subscriber& subscriber) final
         {
             return invoke(subscriber);
+        }
+
+        void visitJSFunctionInGCThread(JSC::AbstractSlotVisitor& visitor) final { visit(visitor); }
+        void visitJSFunctionInGCThread(JSC::SlotVisitor& visitor) final { visit(visitor); }
+        template<typename Visitor> void visit(Visitor& visitor)
+        {
+            visitor.addOpaqueRoot(m_sourceObservable.ptr());
+            if (m_inspector.next)
+                m_inspector.next->visitJSFunctionInGCThread(visitor);
+            if (m_inspector.error)
+                m_inspector.error->visitJSFunctionInGCThread(visitor);
+            if (m_inspector.complete)
+                m_inspector.complete->visitJSFunctionInGCThread(visitor);
+            if (m_inspector.subscribe)
+                m_inspector.subscribe->visitJSFunctionInGCThread(visitor);
+            if (m_inspector.abort)
+                m_inspector.abort->visitJSFunctionInGCThread(visitor);
         }
 
     private:
@@ -121,6 +142,7 @@ private:
             JSC::Exception* exception = scope.exception();
             if (exception) [[unlikely]] {
                 scope.clearException();
+                removeAbortHandler();
                 protect(m_subscriber)->error(exception->value());
                 return;
             }
@@ -177,7 +199,7 @@ private:
 
     void visitAdditionalChildrenInGCThread(JSC::AbstractSlotVisitor& visitor) const final
     {
-        m_subscriber->visitAdditionalChildrenInGCThread(visitor);
+        visitor.addOpaqueRoot(m_subscriber.ptr());
         if (m_inspector.next)
             SUPPRESS_UNCOUNTED_ARG m_inspector.next->visitJSFunctionInGCThread(visitor);
         if (m_inspector.error)

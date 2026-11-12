@@ -1,0 +1,8 @@
+
+PASS Observable.from() preserves Observable identity without observing
+PASS Observable.from() preserves SharedObservable identity without observing
+PASS Iterable conversion is lazy and obtains an iterator for each observation
+PASS Async iterable conversion has independent iterators for overlapping observations
+PASS Reobserving an existing Promise does not recreate the operation that produced it
+PASS Reobserving an existing iterator does not rewind it
+

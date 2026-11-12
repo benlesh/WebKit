@@ -1,0 +1,4 @@
+[Exposed=Window] interface TestConstructorWithoutParentParent {
+    constructor();
+    static undefined parentOperation();
+};

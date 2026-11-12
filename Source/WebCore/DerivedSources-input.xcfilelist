@@ -1585,6 +1585,9 @@ $(PROJECT_DIR)/dom/NodeList.idl
 $(PROJECT_DIR)/dom/NonDocumentTypeChildNode.idl
 $(PROJECT_DIR)/dom/NonElementParentNode.idl
 $(PROJECT_DIR)/dom/Observable.idl
+$(PROJECT_DIR)/dom/ObservableCatchCallback.idl
+$(PROJECT_DIR)/dom/ObservableConfig.idl
+$(PROJECT_DIR)/dom/ObservableEventListenerOptions.idl
 $(PROJECT_DIR)/dom/ObservableInspector.idl
 $(PROJECT_DIR)/dom/ObservableInspectorAbortCallback.idl
 $(PROJECT_DIR)/dom/PageRevealEvent.idl
@@ -1610,6 +1613,9 @@ $(PROJECT_DIR)/dom/SecurityPolicyViolationEventDisposition.idl
 $(PROJECT_DIR)/dom/ShadowRoot.idl
 $(PROJECT_DIR)/dom/ShadowRootInit.idl
 $(PROJECT_DIR)/dom/ShadowRootMode.idl
+$(PROJECT_DIR)/dom/ShareConfig.idl
+$(PROJECT_DIR)/dom/SharedObservable.idl
+$(PROJECT_DIR)/dom/SharedObservableConfig.idl
 $(PROJECT_DIR)/dom/SlotAssignmentMode.idl
 $(PROJECT_DIR)/dom/Slotable.idl
 $(PROJECT_DIR)/dom/StartViewTransitionOptions.idl
@@ -1620,6 +1626,7 @@ $(PROJECT_DIR)/dom/Subscriber.idl
 $(PROJECT_DIR)/dom/SubscriberCallback.idl
 $(PROJECT_DIR)/dom/SubscriptionObserver.idl
 $(PROJECT_DIR)/dom/SubscriptionObserverCallback.idl
+$(PROJECT_DIR)/dom/TerminationConfig.idl
 $(PROJECT_DIR)/dom/Text.idl
 $(PROJECT_DIR)/dom/TextDecoder.idl
 $(PROJECT_DIR)/dom/TextDecoderStream.idl

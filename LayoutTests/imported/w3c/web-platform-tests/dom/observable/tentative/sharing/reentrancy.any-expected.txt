@@ -1,0 +1,16 @@
+
+PASS Nested live delivery during replayed 1 interleaves with a fixed replay snapshot
+PASS Nested live delivery during replayed 2 interleaves with a fixed replay snapshot
+PASS Reentrant complete suppresses a pending live value for later recipients
+PASS Reentrant complete during replay suppresses the remaining replay snapshot
+PASS complete: stopped state and cleanup precede callbacks, which can cancel later terminal recipients
+PASS Reentrant error suppresses a pending live value for later recipients
+PASS Reentrant error during replay suppresses the remaining replay snapshot
+PASS error: stopped state and cleanup precede callbacks, which can cancel later terminal recipients
+PASS Cancellation during live delivery suppresses recipients already captured in its snapshot
+PASS cancel: reset is committed before teardown can start a replacement execution
+PASS complete: reset is committed before teardown can start a replacement execution
+PASS complete(): execution eligibility is checked after converting a reentrant close getter
+PASS Canceling an old terminal recipient cannot detach a replacement execution's observer
+PASS Permanent closure and retained history are visible to a subscription made during teardown
+

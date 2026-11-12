@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<!-- webkit-test-runner [ ObservableEnabled=true ] -->
+<meta charset="utf-8">
+<script src="../../resources/testharness.js"></script>
+<script src="../../resources/testharnessreport.js"></script>
+<script>
+
+function collect() {
+    assert_implements(window.GCController, 'This is a WebKit GC regression test');
+    GCController.collect();
+}
+
+promise_test(async () => {
+    const source = (() => {
+        const input = {answer: 42};
+        const mapper = value => ({input, value});
+        return Observable.from([7]).map(mapper).share({maxReplayValues: 1, closeOnComplete: true});
+    })();
+    await new Promise(resolve => setTimeout(resolve, 0));
+    collect();
+    source.subscribe();
+    await new Promise(resolve => setTimeout(resolve, 0));
+    collect();
+    const values = [];
+    source.subscribe(value => { collect(); values.push(value); });
+    assert_equals(values.length, 1);
+    assert_equals(values[0].input.answer, 42);
+    assert_equals(values[0].value, 7);
+}, 'Unsubscribed producers, operator callbacks, conversion inputs, and retained replay survive GC');
+
+promise_test(async () => {
+    const source = new SharedObservable({producer(s) { s.error({answer: 42}); }, closeOnError: true});
+    source.subscribe({error() {}});
+    await new Promise(resolve => setTimeout(resolve, 0));
+    collect();
+    let reason;
+    source.subscribe({error(value) { reason = value; }});
+    assert_equals(reason.answer, 42);
+}, 'Retained terminal errors are traced');
+
+test(() => {
+    let sink;
+    const source = new SharedObservable(s => {
+        sink = s;
+        s.addTeardown(collect);
+    });
+    const calls = [];
+    source.subscribe({complete() { collect(); calls.push(1); }});
+    source.subscribe({complete() { calls.push(2); }});
+    sink.complete();
+    assert_array_equals(calls, [1, 2]);
+}, 'Detached terminal recipients stay traced during teardown and earlier callbacks');
+
+</script>

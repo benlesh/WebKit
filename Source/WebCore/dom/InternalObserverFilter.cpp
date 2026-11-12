@@ -35,6 +35,7 @@
 #include "Subscriber.h"
 #include "SubscriberCallback.h"
 #include <JavaScriptCore/JSCJSValueInlines.h>
+#include <JavaScriptCore/SlotVisitorInlines.h>
 #include <JavaScriptCore/TopExceptionScope.h>
 
 namespace WebCore {
@@ -76,6 +77,14 @@ public:
             return invoke(subscriber);
         }
 
+        void visitJSFunctionInGCThread(JSC::AbstractSlotVisitor& visitor) final { visit(visitor); }
+        void visitJSFunctionInGCThread(JSC::SlotVisitor& visitor) final { visit(visitor); }
+        template<typename Visitor> void visit(Visitor& visitor)
+        {
+            visitor.addOpaqueRoot(m_sourceObservable.ptr());
+            m_predicate->visitJSFunctionInGCThread(visitor);
+        }
+
     private:
         SubscriberCallbackFilter(ScriptExecutionContext& context, Ref<Observable> source, Ref<PredicateCallback> predicate)
             : SubscriberCallback(&context)
@@ -106,7 +115,7 @@ private:
         JSC::Exception* previousException = nullptr;
         {
             auto catchScope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
-            auto result = protect(m_predicate)->invokeRethrowingException(value, m_idx);
+            auto result = protect(m_predicate)->invokeRethrowingException(value, m_idx++);
             previousException = catchScope.exception();
             if (previousException) {
                 catchScope.clearException();
@@ -118,7 +127,6 @@ private:
                 matches = result.releaseReturnValue();
         }
 
-        m_idx += 1;
 
         if (matches)
             protect(m_subscriber)->next(value);
@@ -137,7 +145,7 @@ private:
 
     void visitAdditionalChildrenInGCThread(JSC::AbstractSlotVisitor& visitor) const final
     {
-        m_subscriber->visitAdditionalChildrenInGCThread(visitor);
+        visitor.addOpaqueRoot(m_subscriber.ptr());
         m_predicate->visitJSFunctionInGCThread(visitor);
     }
 

@@ -51,6 +51,8 @@ namespace WebCore {
 enum class EventTargetInterfaceType : uint8_t;
 class DOMWrapperWorld;
 class EventTarget;
+class Observable;
+struct ObservableEventListenerOptions;
 class JSEventListener;
 class WebCoreOpaqueRoot;
 template<typename> class ExceptionOr;
@@ -95,6 +97,8 @@ public:
     NODELETE virtual WebCoreOpaqueRoot opaqueRoot() const;
 
     NODELETE virtual bool isPaymentRequest() const;
+
+    Ref<Observable> when(ScriptExecutionContext&, const AtomString&, const ObservableEventListenerOptions&);
 
     using AddEventListenerOptionsOrBoolean = Variant<AddEventListenerOptions, bool>;
     void addEventListenerForBindings(const AtomString& eventType, RefPtr<EventListener>&&, AddEventListenerOptionsOrBoolean&&);

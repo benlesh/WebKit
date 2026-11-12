@@ -1255,6 +1255,9 @@ JS_BINDING_IDLS := \
     $(WebCore)/dom/NonDocumentTypeChildNode.idl \
     $(WebCore)/dom/NonElementParentNode.idl \
     $(WebCore)/dom/Observable.idl \
+    $(WebCore)/dom/ObservableCatchCallback.idl \
+    $(WebCore)/dom/ObservableConfig.idl \
+    $(WebCore)/dom/ObservableEventListenerOptions.idl \
     $(WebCore)/dom/ObservableInspector.idl \
     $(WebCore)/dom/ObservableInspectorAbortCallback.idl \
     $(WebCore)/dom/PageRevealEvent.idl \
@@ -1280,6 +1283,9 @@ JS_BINDING_IDLS := \
     $(WebCore)/dom/ShadowRoot.idl \
     $(WebCore)/dom/ShadowRootInit.idl \
     $(WebCore)/dom/ShadowRootMode.idl \
+    $(WebCore)/dom/ShareConfig.idl \
+    $(WebCore)/dom/SharedObservable.idl \
+    $(WebCore)/dom/SharedObservableConfig.idl \
     $(WebCore)/dom/SlotAssignmentMode.idl \
     $(WebCore)/dom/Slotable.idl \
     $(WebCore)/dom/StartViewTransitionOptions.idl \
@@ -1290,6 +1296,7 @@ JS_BINDING_IDLS := \
     $(WebCore)/dom/SubscriberCallback.idl \
     $(WebCore)/dom/SubscriptionObserver.idl \
     $(WebCore)/dom/SubscriptionObserverCallback.idl \
+    $(WebCore)/dom/TerminationConfig.idl \
     $(WebCore)/dom/Text.idl \
     $(WebCore)/dom/TextDecoder.idl \
     $(WebCore)/dom/TextDecoderStream.idl \

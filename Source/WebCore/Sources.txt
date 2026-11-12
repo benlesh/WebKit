@@ -816,6 +816,7 @@ bindings/js/JSNodeCustom.cpp
 bindings/js/JSNodeIteratorCustom.cpp
 bindings/js/JSNodeListCustom.cpp @cost:3
 bindings/js/JSObservableArray.cpp
+bindings/js/JSObservableCustom.cpp
 bindings/js/JSOffscreenCanvasRenderingContext2DCustom.cpp @cost:3
 bindings/js/JSPaintRenderingContext2DCustom.cpp @cost:3
 bindings/js/JSPaintWorkletGlobalScopeCustom.cpp @cost:3
@@ -1455,6 +1456,10 @@ dom/NodeList.cpp
 dom/NodeRareData.cpp
 dom/NodeTraversal.cpp
 dom/Observable.cpp
+dom/EventTargetObservable.cpp
+dom/ObservableFrom.cpp
+dom/ObservableOperators.cpp
+dom/SharedObservable.cpp
 dom/PageRevealEvent.cpp
 dom/PageSwapEvent.cpp
 dom/PageTransitionEvent.cpp
@@ -4816,6 +4821,13 @@ JSOESTextureHalfFloat.cpp
 JSOESTextureHalfFloatLinear.cpp
 JSOESVertexArrayObject.cpp
 JSObservable.cpp
+JSObservableCatchCallback.cpp
+JSObservableConfig.cpp
+JSObservableEventListenerOptions.cpp
+JSShareConfig.cpp
+JSSharedObservable.cpp
+JSSharedObservableConfig.cpp
+JSTerminationConfig.cpp
 JSObservableInspector.cpp
 JSObservableInspectorAbortCallback.cpp
 JSOfflineAudioCompletionEvent.cpp

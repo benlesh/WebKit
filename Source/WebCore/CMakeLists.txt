@@ -1207,6 +1207,9 @@ set(WebCore_NON_SVG_IDL_FILES
     dom/NodeIterator.idl
     dom/NodeList.idl
     dom/Observable.idl
+    dom/ObservableCatchCallback.idl
+    dom/ObservableConfig.idl
+    dom/ObservableEventListenerOptions.idl
     dom/ObservableInspector.idl
     dom/ObservableInspectorAbortCallback.idl
     dom/PageRevealEvent.idl
@@ -1229,6 +1232,9 @@ set(WebCore_NON_SVG_IDL_FILES
     dom/ShadowRoot.idl
     dom/ShadowRootInit.idl
     dom/ShadowRootMode.idl
+    dom/ShareConfig.idl
+    dom/SharedObservable.idl
+    dom/SharedObservableConfig.idl
     dom/SlotAssignmentMode.idl
     dom/StartViewTransitionOptions.idl
     dom/StaticRange.idl
@@ -1238,6 +1244,7 @@ set(WebCore_NON_SVG_IDL_FILES
     dom/SubscriberCallback.idl
     dom/SubscriptionObserver.idl
     dom/SubscriptionObserverCallback.idl
+    dom/TerminationConfig.idl
     dom/Text.idl
     dom/TextDecoder.idl
     dom/TextDecoderStream.idl

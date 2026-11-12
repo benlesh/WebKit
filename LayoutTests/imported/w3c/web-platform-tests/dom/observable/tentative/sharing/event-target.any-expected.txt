@@ -1,0 +1,6 @@
+
+PASS EventTarget.when() installs a separate event listener for each observation
+PASS EventTarget.when() composition is ordinary and can independently observe a later event
+PASS Cancellation during event delivery synchronously removes independent observations
+PASS Explicitly shared event work runs once and retains synchronous preventDefault
+

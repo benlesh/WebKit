@@ -1,0 +1,42 @@
+
+PASS The Observable sharing APIs are exposed
+PASS share(): one lazy execution remains until its last observer cancels, then can restart
+PASS Separate share() calls on ordinary input establish independent boundaries
+PASS Sharing configuration rejects replay capacity -1
+PASS Sharing configuration rejects replay capacity 0.5
+PASS Sharing configuration rejects replay capacity Infinity
+PASS Sharing configuration rejects replay capacity -Infinity
+PASS Sharing configuration rejects replay capacity NaN
+PASS Sharing configuration rejects replay capacity 9007199254740992
+PASS Sharing configuration accepts negative zero without starting production
+PASS Sharing configuration accepts zero without starting production
+PASS Sharing configuration accepts one without starting production
+PASS Sharing configuration accepts maximum safe integer without starting production
+PASS Positive and negative zero replay capacities preserve shared identity
+PASS share({maxReplayValues: undefined}) on ordinary input uses the default capacity of zero
+PASS Sharing configuration rejects both enabled last-unsubscribe flags after boolean conversion
+PASS share(): inherited keepAliveOnLastUnsubscribe must be explicitly disabled before enabling its opposite
+PASS share(): inherited closeOnLastUnsubscribe must be explicitly disabled before enabling its opposite
+PASS share(): identity comparison includes normalized maxReplayValues
+PASS share(): identity comparison includes normalized closeOnComplete
+PASS share(): identity comparison includes normalized closeOnError
+PASS share(): identity comparison includes normalized closeOnLastUnsubscribe
+PASS share(): identity comparison includes normalized keepAliveOnLastUnsubscribe
+PASS Configuration is read once per call, including an identity return after permanent closure
+PASS share() ignores constructor-only members on ordinary input, identity returns, and wrappers
+PASS Different sharing settings create a lazy SharedObservable wrapper on an idle source
+PASS A forwarding wrapper cannot recover discarded upstream history or copy the producer
+PASS A wrapper cannot reopen a source closed by complete, and chooses its own terminal policy
+PASS A new wrapper inherits the source's close-on-complete setting behaviorally
+PASS A new wrapper created after source complete closure observes retained history without restarting
+PASS A wrapper cannot reopen a source closed by error, and chooses its own terminal policy
+PASS A new wrapper inherits the source's close-on-error setting behaviorally
+PASS A new wrapper created after source error closure observes retained history without restarting
+PASS A new wrapper inherits replay capacity while changing its completion policy
+PASS A new wrapper inherits closeOnLastUnsubscribe and closes independently of its source
+PASS A new wrapper inherits keepAliveOnLastUnsubscribe behaviorally
+PASS Last wrapper cancellation releases upstream with no other source observers
+PASS Last wrapper cancellation releases upstream with another source observer
+PASS A keep-alive wrapper keeps a default source observed but cannot prevent its complete
+PASS A keep-alive wrapper keeps a default source observed but cannot prevent its error
+
