@@ -7766,6 +7766,27 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		D32CED2D20FDA5B5FBC8794F /* ObservableAlgorithm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObservableAlgorithm.h; sourceTree = "<group>"; };
+		5C2DB92A568D9462978D27A2 /* ObservableCatchCallback.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObservableCatchCallback.h; sourceTree = "<group>"; };
+		C39937DE1C8DBEBC5F41A52B /* ObservableConfig.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObservableConfig.h; sourceTree = "<group>"; };
+		E361C1B6038C51E05587F245 /* ObservableEventListenerOptions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObservableEventListenerOptions.h; sourceTree = "<group>"; };
+		04C74F55F1CC3F1C680D551C /* ObservableNativeCallback.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObservableNativeCallback.h; sourceTree = "<group>"; };
+		162DDC80294CA84289ACFC8E /* ShareConfig.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShareConfig.h; sourceTree = "<group>"; };
+		970696CAD4C8345DF4F48ACF /* SharedObservable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SharedObservable.h; sourceTree = "<group>"; };
+		C8016E40320181E0CED40C7F /* SharedObservableConfig.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SharedObservableConfig.h; sourceTree = "<group>"; };
+		7136CD0DD5570AAAD801B1BA /* TerminationConfig.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TerminationConfig.h; sourceTree = "<group>"; };
+		1B2683C657447D99DC4DB51C /* ObservableCatchCallback.idl */ = {isa = PBXFileReference; lastKnownFileType = text; path = ObservableCatchCallback.idl; sourceTree = "<group>"; };
+		7DAA3133654A1A66E1CEEE6F /* ObservableConfig.idl */ = {isa = PBXFileReference; lastKnownFileType = text; path = ObservableConfig.idl; sourceTree = "<group>"; };
+		C9F3B7F812B936E0BD7B17A5 /* ObservableEventListenerOptions.idl */ = {isa = PBXFileReference; lastKnownFileType = text; path = ObservableEventListenerOptions.idl; sourceTree = "<group>"; };
+		7D9991074EE61236DF844B63 /* ShareConfig.idl */ = {isa = PBXFileReference; lastKnownFileType = text; path = ShareConfig.idl; sourceTree = "<group>"; };
+		DC1DE178E39935521127FFEA /* SharedObservable.idl */ = {isa = PBXFileReference; lastKnownFileType = text; path = SharedObservable.idl; sourceTree = "<group>"; };
+		C21328D8325EA0BD702BD34C /* SharedObservableConfig.idl */ = {isa = PBXFileReference; lastKnownFileType = text; path = SharedObservableConfig.idl; sourceTree = "<group>"; };
+		F3E65C3B886919DDA59C7A0F /* TerminationConfig.idl */ = {isa = PBXFileReference; lastKnownFileType = text; path = TerminationConfig.idl; sourceTree = "<group>"; };
+		F17A53A44EEF6B21B2D53409 /* EventTargetObservable.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = EventTargetObservable.cpp; sourceTree = "<group>"; };
+		B5D6998905673DDE301BF781 /* ObservableFrom.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ObservableFrom.cpp; sourceTree = "<group>"; };
+		4E20967F3A6108F289033D78 /* ObservableOperators.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ObservableOperators.cpp; sourceTree = "<group>"; };
+		61E3941239B083D997275C9A /* SharedObservable.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SharedObservable.cpp; sourceTree = "<group>"; };
+		AEB9565FE9FA658E3BC23177 /* JSObservableCustom.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = JSObservableCustom.cpp; sourceTree = "<group>"; };
 		2346E0FF92D1BDEFA870881B /* RasterDrawingOptions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RasterDrawingOptions.h; sourceTree = "<group>"; };
 		F4545C832C4D153807E9E90E /* RasterDrawingOptions.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = RasterDrawingOptions.cpp; sourceTree = "<group>"; };
 		02C7A954E7356C44F0D32986 /* WorkerInternals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WorkerInternals.h; sourceTree = "<group>"; };
@@ -37644,6 +37665,7 @@
 				93849C2124BEDD8800448D5A /* JSIDBSerializationGlobalObject.h */,
 				460C70FC28E662D5005F4D74 /* JSObservableArray.cpp */,
 				460C70FB28E662D4005F4D74 /* JSObservableArray.h */,
+				AEB9565FE9FA658E3BC23177 /* JSObservableCustom.cpp */,
 				93B70D4F09EB0C7C009D8468 /* JSPluginElementFunctions.cpp */,
 				93B70D5009EB0C7C009D8468 /* JSPluginElementFunctions.h */,
 				46714D6828E7488A004A2F0D /* JSShadowRootCustom.cpp */,
@@ -43229,6 +43251,26 @@
 				7C6752BA1B06E82000C279CB /* NonElementParentNode.idl */,
 				FFEFAB2D183BCC6F00514536 /* Observable.cpp */,
 				FFEFAB2D183BCC6F00514535 /* Observable.h */,
+				F17A53A44EEF6B21B2D53409 /* EventTargetObservable.cpp */,
+				D32CED2D20FDA5B5FBC8794F /* ObservableAlgorithm.h */,
+				5C2DB92A568D9462978D27A2 /* ObservableCatchCallback.h */,
+				1B2683C657447D99DC4DB51C /* ObservableCatchCallback.idl */,
+				C39937DE1C8DBEBC5F41A52B /* ObservableConfig.h */,
+				7DAA3133654A1A66E1CEEE6F /* ObservableConfig.idl */,
+				E361C1B6038C51E05587F245 /* ObservableEventListenerOptions.h */,
+				C9F3B7F812B936E0BD7B17A5 /* ObservableEventListenerOptions.idl */,
+				B5D6998905673DDE301BF781 /* ObservableFrom.cpp */,
+				04C74F55F1CC3F1C680D551C /* ObservableNativeCallback.h */,
+				4E20967F3A6108F289033D78 /* ObservableOperators.cpp */,
+				162DDC80294CA84289ACFC8E /* ShareConfig.h */,
+				7D9991074EE61236DF844B63 /* ShareConfig.idl */,
+				61E3941239B083D997275C9A /* SharedObservable.cpp */,
+				970696CAD4C8345DF4F48ACF /* SharedObservable.h */,
+				DC1DE178E39935521127FFEA /* SharedObservable.idl */,
+				C8016E40320181E0CED40C7F /* SharedObservableConfig.h */,
+				C21328D8325EA0BD702BD34C /* SharedObservableConfig.idl */,
+				7136CD0DD5570AAAD801B1BA /* TerminationConfig.h */,
+				F3E65C3B886919DDA59C7A0F /* TerminationConfig.idl */,
 				A84377B72CD9C91100CD134E /* ObservableInspector.h */,
 				A84377B82CD9C91100CD134E /* ObservableInspector.idl */,
 				A89D454F2CD9EA18009F14E5 /* ObservableInspectorAbortCallback.h */,

@@ -34,14 +34,15 @@
 #include "Subscriber.h"
 #include "SubscriberCallback.h"
 #include <JavaScriptCore/JSCJSValueInlines.h>
+#include <JavaScriptCore/SlotVisitorInlines.h>
 
 namespace WebCore {
 
 class InternalObserverTake final : public InternalObserver {
 public:
-    static Ref<InternalObserverTake> create(ScriptExecutionContext& context, Ref<Subscriber> subscriber, uint64_t amount)
+    static Ref<InternalObserverTake> create(ScriptExecutionContext& context, Ref<Subscriber> subscriber, uint64_t amount, Ref<AbortSignal> upstream)
     {
-        Ref internalObserver = adoptRef(*new InternalObserverTake(context, subscriber, amount));
+        Ref internalObserver = adoptRef(*new InternalObserverTake(context, subscriber, amount, WTF::move(upstream)));
         internalObserver->suspendIfNeeded();
         return internalObserver;
     }
@@ -63,8 +64,10 @@ public:
             }
 
             SubscribeOptions options;
-            options.signal = subscriber.signal();
-            m_sourceObservable->subscribeInternal(*context, InternalObserverTake::create(*context, subscriber, m_amount), WTF::move(options));
+            auto upstream = AbortSignal::create(context.get());
+            upstream->signalFollow(subscriber.signal());
+            options.signal = upstream.copyRef();
+            m_sourceObservable->subscribeInternal(*context, InternalObserverTake::create(*context, subscriber, m_amount, WTF::move(upstream)), WTF::move(options));
 
             return { };
         }
@@ -72,6 +75,13 @@ public:
         CallbackResult<void> invokeRethrowingException(Subscriber& subscriber) final
         {
             return invoke(subscriber);
+        }
+
+        void visitJSFunctionInGCThread(JSC::AbstractSlotVisitor& visitor) final { visit(visitor); }
+        void visitJSFunctionInGCThread(JSC::SlotVisitor& visitor) final { visit(visitor); }
+        template<typename Visitor> void visit(Visitor& visitor)
+        {
+            visitor.addOpaqueRoot(m_sourceObservable.ptr());
         }
 
     private:
@@ -93,9 +103,11 @@ private:
         if (!m_amount)
             return;
         Ref subscriber = m_subscriber;
+        bool last = !--m_amount;
+        if (last)
+            m_upstream->signalAbort(JSC::jsUndefined());
         subscriber->next(value);
-        m_amount -= 1;
-        if (!m_amount)
+        if (last)
             subscriber->complete();
     }
 
@@ -112,16 +124,19 @@ private:
 
     void visitAdditionalChildrenInGCThread(JSC::AbstractSlotVisitor& visitor) const final
     {
-        m_subscriber->visitAdditionalChildrenInGCThread(visitor);
+        visitor.addOpaqueRoot(m_upstream.ptr());
+        visitor.addOpaqueRoot(m_subscriber.ptr());
     }
 
-    InternalObserverTake(ScriptExecutionContext& context, Ref<Subscriber> subscriber, uint64_t amount)
+    InternalObserverTake(ScriptExecutionContext& context, Ref<Subscriber> subscriber, uint64_t amount, Ref<AbortSignal> upstream)
         : InternalObserver(context)
         , m_subscriber(subscriber)
+        , m_upstream(WTF::move(upstream))
         , m_amount(amount)
     { }
 
     const Ref<Subscriber> m_subscriber;
+    const Ref<AbortSignal> m_upstream;
     uint64_t m_amount;
 };
 
@@ -131,3 +146,4 @@ Ref<SubscriberCallback> createSubscriberCallbackTake(ScriptExecutionContext& con
 }
 
 } // namespace WebCore
+

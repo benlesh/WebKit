@@ -73,14 +73,12 @@ void InternalObserverFromScript::complete()
 
 void InternalObserverFromScript::visitAdditionalChildrenInGCThread(JSC::AbstractSlotVisitor& visitor) const
 {
-    if (RefPtr next = m_next)
-        next->visitJSFunctionInGCThread(visitor);
-
-    if (RefPtr error = m_error)
-        error->visitJSFunctionInGCThread(visitor);
-
-    if (RefPtr complete = m_complete)
-        complete->visitJSFunctionInGCThread(visitor);
+    if (m_next)
+        SUPPRESS_UNCOUNTED_ARG m_next->visitJSFunctionInGCThread(visitor);
+    if (m_error)
+        SUPPRESS_UNCOUNTED_ARG m_error->visitJSFunctionInGCThread(visitor);
+    if (m_complete)
+        SUPPRESS_UNCOUNTED_ARG m_complete->visitJSFunctionInGCThread(visitor);
 }
 
 InternalObserverFromScript::InternalObserverFromScript(ScriptExecutionContext& context, RefPtr<JSSubscriptionObserverCallback> callback)
@@ -100,3 +98,4 @@ InternalObserverFromScript::InternalObserverFromScript(ScriptExecutionContext& c
 }
 
 } // namespace WebCore
+

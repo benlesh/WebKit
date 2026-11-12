@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2026 Ben Lesh. All rights reserved.
  * Copyright (C) 2024 Keith Cirkel <webkit@keithcirkel.co.uk>. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,48 +23,88 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include "config.h"
 #include "Observable.h"
 
-#include "AbortSignal.h"
-#include "CallbackResult.h"
+#include "ContextDestructionObserverInlines.h"
 #include "Document.h"
-#include "Exception.h"
-#include "ExceptionCode.h"
 #include "InternalObserverDrop.h"
-#include "InternalObserverEvery.h"
 #include "InternalObserverFilter.h"
-#include "InternalObserverFind.h"
-#include "InternalObserverFirst.h"
-#include "InternalObserverForEach.h"
 #include "InternalObserverFromScript.h"
 #include "InternalObserverInspect.h"
-#include "InternalObserverLast.h"
 #include "InternalObserverMap.h"
-#include "InternalObserverReduce.h"
-#include "InternalObserverSome.h"
 #include "InternalObserverTake.h"
-#include "JSDOMPromiseDeferred.h"
+#include "JSObservable.h"
+#include "JSSubscriber.h"
+#include "JSSubscriberCallback.h"
 #include "JSSubscriptionObserverCallback.h"
-#include "MapperCallback.h"
+#include "ObservableConfig.h"
 #include "ObservableInspector.h"
-#include "PredicateCallback.h"
-#include "ReducerCallback.h"
+#include "ObservableNativeCallback.h"
 #include "ScriptWrappableInlines.h"
+#include "SharedObservable.h"
 #include "SubscribeOptions.h"
 #include "Subscriber.h"
-#include "SubscriberCallback.h"
 #include "SubscriptionObserver.h"
-#include "VisitorCallback.h"
+#include <JavaScriptCore/MarkedArgumentBuffer.h>
+#include <JavaScriptCore/Strong.h>
+#include <JavaScriptCore/TopExceptionScope.h>
+#include <wtf/HashSet.h>
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(Observable);
 
-Ref<Observable> Observable::create(Ref<SubscriberCallback> callback)
+static Vector<Ref<SharedObservable>> uniqueSources(Vector<Ref<SharedObservable>>&& sources)
 {
-    return adoptRef(*new Observable(callback));
+    HashSet<SharedObservable*> seen;
+    sources.removeAllMatching([&](auto& source) {
+        return !seen.add(source.ptr()).isNewEntry;
+    });
+    return WTF::move(sources);
+}
+
+Ref<Observable> Observable::create(ScriptExecutionContext& context, ProducerUnion&& producer)
+{
+    return WTF::switchOn(WTF::move(producer),
+        [&](RefPtr<JSSubscriberCallback>&& callback) {
+            return create(context, callback.releaseNonNull());
+        },
+        [&](ObservableConfig&& config) {
+            return create(context, config.producer.releaseNonNull(), config.sharedSources.value_or(Vector<Ref<SharedObservable>> { }));
+        });
+}
+
+Ref<Observable> Observable::create(ScriptExecutionContext& context, Ref<SubscriberCallback>&& callback)
+{
+    return create(context, WTF::move(callback), { });
+}
+
+Ref<Observable> Observable::create(ScriptExecutionContext& context, Ref<SubscriberCallback>&& callback, Vector<Ref<SharedObservable>>&& sources)
+{
+    Ref observable = adoptRef(*new Observable(context, WTF::move(callback), WTF::move(sources)));
+    observable->suspendIfNeeded();
+    return observable;
+}
+
+Observable::Observable(ScriptExecutionContext& context, Ref<SubscriberCallback>&& callback, Vector<Ref<SharedObservable>>&& sources)
+    : ActiveDOMObject(&context)
+    , m_subscriberCallback(WTF::move(callback))
+    , m_sharedSources(uniqueSources(WTF::move(sources)))
+{
+}
+
+Observable::~Observable() = default;
+
+bool Observable::canSubscribe() const
+{
+    RefPtr context = scriptExecutionContext();
+    if (!context || isContextStopped())
+        return false;
+    RefPtr document = dynamicDowncast<Document>(context);
+    return !document || document->isFullyActive();
 }
 
 void Observable::subscribe(ScriptExecutionContext& context, ObserverUnion&& observer, SubscribeOptions&& options)
@@ -74,107 +115,130 @@ void Observable::subscribe(ScriptExecutionContext& context, ObserverUnion&& obse
         },
         [&](SubscriptionObserver&& subscription) {
             subscribeInternal(context, InternalObserverFromScript::create(context, WTF::move(subscription)), WTF::move(options));
-        }
-    );
+        });
 }
 
-void Observable::subscribeInternal(ScriptExecutionContext& context, Ref<InternalObserver>&& observer, SubscribeOptions&& options)
+void Observable::subscribeInternal(ScriptExecutionContext&, Ref<InternalObserver>&& observer, SubscribeOptions&& options)
 {
-    RefPtr document = dynamicDowncast<Document>(context);
-    if (document && !document->isFullyActive())
+    if (!canSubscribe() || (options.signal && options.signal->aborted())) {
+        observer->deactivate();
         return;
-
-    Ref subscriber = Subscriber::create(context, WTF::move(observer), WTF::move(options));
-
-    Ref vm = context.globalObject()->vm();
-    JSC::JSLockHolder lock(vm);
-
-    // The exception is not reported, instead it is forwarded to the
-    // error handler.
-    JSC::Exception* previousException = nullptr;
-    {
-        auto catchScope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
-        m_subscriberCallback->invokeRethrowingException(subscriber);
-        previousException = catchScope.exception();
-        if (previousException) {
-            catchScope.clearException();
-            subscriber->error(previousException->value());
+    }
+    Ref protectedThis { *this };
+    Ref context = *scriptExecutionContext();
+    auto* globalObject = context->globalObject();
+    JSC::JSLockHolder lock(globalObject->vm());
+    RefPtr shared = dynamicDowncast<SharedObservable>(*this);
+    bool retained = shared && shared->terminal() != SharedObservable::Terminal::None;
+    RefPtr subscriber = shared ? shared->currentSubscriber() : nullptr;
+    bool start = !retained && !subscriber;
+    if (!subscriber) {
+        subscriber = Subscriber::create(context, *this);
+        if (shared && start)
+            shared->setCurrentSubscriber(subscriber.get());
+    }
+    JSC::Strong<JSC::JSObject> wrapper(globalObject->vm(), JSC::asObject(toJS(globalObject, globalObject, *subscriber)));
+    auto observation = ObservableObservation::create(*this, WTF::move(observer), WTF::move(options.signal));
+    subscriber->addObservation(observation.copyRef());
+    if (shared) {
+        // A fixed, rooted snapshot permits synchronous reentrancy without mutation or queuing.
+        JSC::MarkedArgumentBuffer replay;
+        for (auto value : shared->replayValues())
+            replay.append(value);
+        RELEASE_ASSERT(!replay.hasOverflowed());
+        for (auto value : replay) {
+            if (!observation->active() || !canSubscribe())
+                break;
+            observation->next(value);
         }
     }
+    if (retained) {
+        subscriber->deliverRetainedTerminal(shared->terminal() == SharedObservable::Terminal::Error, shared->terminalReason());
+        return;
+    }
+    if (!start || !subscriber->isActive())
+        return;
+    auto scope = DECLARE_TOP_EXCEPTION_SCOPE(globalObject->vm());
+    m_subscriberCallback->invokeRethrowingException(*subscriber);
+    if (auto* exception = scope.exception()) {
+        auto value = exception->value();
+        scope.clearException();
+        subscriber->error(value);
+    }
+}
+
+std::optional<Vector<Ref<SharedObservable>>> Observable::sharedSources() const
+{
+    if (m_sharedSources.isEmpty())
+        return std::nullopt;
+    return m_sharedSources;
+}
+
+Vector<Ref<SharedObservable>> Observable::collectSharedSources(std::initializer_list<Observable*> inputs)
+{
+    Vector<Ref<SharedObservable>> result;
+    for (auto* input : inputs) {
+        if (auto* shared = dynamicDowncast<SharedObservable>(*input))
+            result.append(*shared);
+        else
+            result.appendVector(input->m_sharedSources);
+    }
+    return uniqueSources(WTF::move(result));
+}
+
+ExceptionOr<Ref<SharedObservable>> Observable::share(JSDOMGlobalObject& globalObject, const ShareConfig& config)
+{
+    RefPtr shared = dynamicDowncast<SharedObservable>(*this);
+    auto settings = config.normalize(globalObject, shared ? shared->settings() : ShareSettings { });
+    if (settings.hasException())
+        return settings.releaseException();
+    if (shared && settings.returnValue() == shared->settings())
+        return shared.releaseNonNull();
+    auto callback = ObservableNativeCallback::forward(*globalObject.scriptExecutionContext(), *this);
+    return SharedObservable::create(*globalObject.scriptExecutionContext(), WTF::move(callback), settings.releaseReturnValue(), collectSharedSources({ this }));
 }
 
 Ref<Observable> Observable::map(ScriptExecutionContext& context, MapperCallback& mapper)
 {
-    return create(createSubscriberCallbackMap(context, *this, mapper));
+    return create(context, createSubscriberCallbackMap(context, *this, mapper), collectSharedSources({ this }));
 }
 
 Ref<Observable> Observable::filter(ScriptExecutionContext& context, PredicateCallback& predicate)
 {
-    return create(createSubscriberCallbackFilter(context, *this, predicate));
+    return create(context, createSubscriberCallbackFilter(context, *this, predicate), collectSharedSources({ this }));
 }
 
 Ref<Observable> Observable::take(ScriptExecutionContext& context, uint64_t amount)
 {
-    return create(createSubscriberCallbackTake(context, *this, amount));
+    return create(context, createSubscriberCallbackTake(context, *this, amount), collectSharedSources({ this }));
 }
 
 Ref<Observable> Observable::drop(ScriptExecutionContext& context, uint64_t amount)
 {
-    return create(createSubscriberCallbackDrop(context, *this, amount));
+    return create(context, createSubscriberCallbackDrop(context, *this, amount), collectSharedSources({ this }));
 }
 
 Ref<Observable> Observable::inspect(ScriptExecutionContext& context, InspectorUnion&& inspectorUnion)
 {
     return WTF::switchOn(WTF::move(inspectorUnion),
         [&](RefPtr<JSSubscriptionObserverCallback>&& next) {
-            return create(createSubscriberCallbackInspect(context, *this, next.releaseNonNull()));
+            return create(context, createSubscriberCallbackInspect(context, *this, next.releaseNonNull()), collectSharedSources({ this }));
         },
         [&](ObservableInspector&& inspector) {
-            return create(createSubscriberCallbackInspect(context, *this, WTF::move(inspector)));
-        }
-    );
+            return create(context, createSubscriberCallbackInspect(context, *this, WTF::move(inspector)), collectSharedSources({ this }));
+        });
 }
 
-void Observable::first(ScriptExecutionContext& context, SubscribeOptions&& options, Ref<DeferredPromise>&& promise)
+template<typename Visitor>
+void Observable::visitAdditionalChildrenInGCThread(Visitor& visitor)
 {
-    return createInternalObserverOperatorFirst(context, *this, WTF::move(options), WTF::move(promise));
+    m_subscriberCallback->visitJSFunctionInGCThread(visitor);
+    for (auto& source : m_sharedSources)
+        visitor.addOpaqueRoot(source.ptr());
+    if (auto* shared = dynamicDowncast<SharedObservable>(*this))
+        shared->visitSharedChildrenInGCThread(visitor);
 }
 
-void Observable::forEach(ScriptExecutionContext& context, Ref<VisitorCallback>&& callback, SubscribeOptions&& options, Ref<DeferredPromise>&& promise)
-{
-    return createInternalObserverOperatorForEach(context, *this, WTF::move(callback), WTF::move(options), WTF::move(promise));
-}
-
-void Observable::last(ScriptExecutionContext& context, SubscribeOptions&& options, Ref<DeferredPromise>&& promise)
-{
-    return createInternalObserverOperatorLast(context, *this, WTF::move(options), WTF::move(promise));
-}
-
-void Observable::find(ScriptExecutionContext& context, Ref<PredicateCallback>&& callback, SubscribeOptions&& options, Ref<DeferredPromise>&& promise)
-{
-    return createInternalObserverOperatorFind(context, *this, WTF::move(callback), WTF::move(options), WTF::move(promise));
-}
-
-void Observable::every(ScriptExecutionContext& context, Ref<PredicateCallback>&& callback, SubscribeOptions&& options, Ref<DeferredPromise>&& promise)
-{
-    return createInternalObserverOperatorEvery(context, *this, WTF::move(callback), WTF::move(options), WTF::move(promise));
-}
-
-void Observable::some(ScriptExecutionContext& context, Ref<PredicateCallback>&& callback, SubscribeOptions&& options, Ref<DeferredPromise>&& promise)
-{
-    return createInternalObserverOperatorSome(context, *this, WTF::move(callback), WTF::move(options), WTF::move(promise));
-}
-
-void Observable::reduce(ScriptExecutionContext& context, Ref<ReducerCallback>&& callback, JSC::JSValue initialValue, SubscribeOptions&& options, Ref<DeferredPromise>&& promise)
-{
-    return createInternalObserverOperatorReduce(context, *this, WTF::move(callback), initialValue, WTF::move(options), WTF::move(promise));
-}
-
-Observable::Observable(Ref<SubscriberCallback> callback)
-    : m_subscriberCallback(callback)
-{
-}
-
-Observable::~Observable() = default;
+DEFINE_VISIT_ADDITIONAL_CHILDREN_IN_GC_THREAD(Observable);
 
 } // namespace WebCore

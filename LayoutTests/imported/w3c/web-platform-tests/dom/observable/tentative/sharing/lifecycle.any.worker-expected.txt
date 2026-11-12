@@ -1,0 +1,20 @@
+
+PASS complete: configured closure false, producer close false
+PASS complete: configured closure false, producer close true
+PASS complete: configured closure true, producer close false
+PASS complete: configured closure true, producer close true
+PASS error: configured closure false, producer close false
+PASS error: configured closure false, producer close true
+PASS error: configured closure true, producer close false
+PASS error: configured closure true, producer close true
+PASS Last-observer cancellation follows reset
+PASS Last-observer cancellation follows closeOnLastUnsubscribe
+PASS Last-observer cancellation follows keepAliveOnLastUnsubscribe
+PASS Keep-alive with zero observers still ends on complete with permanent policy false
+PASS Keep-alive with zero observers still ends on complete with permanent policy true
+PASS complete does not invoke the last-unsubscribe closure policy
+PASS Keep-alive with zero observers still ends on error with permanent policy false
+PASS Keep-alive with zero observers still ends on error with permanent policy true
+PASS error does not invoke the last-unsubscribe closure policy
+PASS Shared cleanup is LIFO, precedes completion, and late teardown runs immediately
+

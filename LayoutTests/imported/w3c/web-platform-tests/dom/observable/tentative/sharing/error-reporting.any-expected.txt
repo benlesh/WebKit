@@ -1,0 +1,5 @@
+
+PASS An observer exception is reported globally without stopping shared delivery or production
+PASS error(): conversion can obsolete the producer; its error reports without closing the replacement
+PASS A throwing shared teardown does not suppress remaining cleanup or completion
+

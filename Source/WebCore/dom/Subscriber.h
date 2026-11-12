@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2024 Keith Cirkel <webkit@keithcirkel.co.uk>. All rights reserved.
+ * Copyright (C) 2026 Ben Lesh. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,70 +25,85 @@
  */
 
 #pragma once
-
-#include "AbortController.h"
+#include "AbortSignal.h"
 #include "ActiveDOMObject.h"
 #include "InternalObserver.h"
 #include "ScriptWrappable.h"
-#include "SubscribeOptions.h"
+#include "TerminationConfig.h"
 #include "VoidCallback.h"
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>
 
 namespace WebCore {
+class Observable;
+class ObservableAlgorithm;
+class SharedObservable;
+class Subscriber;
 
-class ScriptExecutionContext;
+// Cancellation remains installed while a detached observation awaits terminal delivery.
+class ObservableObservation final : public RefCountedAndCanMakeWeakPtr<ObservableObservation> {
+public:
+    static Ref<ObservableObservation> create(Observable&, Ref<InternalObserver>&&, RefPtr<AbortSignal>&&);
+    ~ObservableObservation();
+    void attach(Subscriber&);
+    void cancel(JSC::JSValue);
+    void detach();
+    void next(JSC::JSValue);
+    void terminal(bool isError, JSC::JSValue);
+    bool active() const { return m_active && !m_canceled; }
+    void removeAbortAlgorithm();
+    void visit(JSC::AbstractSlotVisitor&) const;
+private:
+    ObservableObservation(Observable&, Ref<InternalObserver>&&, RefPtr<AbortSignal>&&);
+    const Ref<InternalObserver> m_observer;
+    const RefPtr<AbortSignal> m_consumerSignal;
+    WeakPtr<SharedObservable> m_sharedOwner;
+    WeakPtr<Subscriber> m_subscriber;
+    std::optional<uint32_t> m_abortAlgorithm;
+    bool m_active { true };
+    bool m_canceled { false };
+};
 
 class Subscriber final : public ActiveDOMObject, public ScriptWrappable, public RefCounted<Subscriber> {
     WTF_MAKE_TZONE_ALLOCATED(Subscriber);
-
 public:
     void ref() const final { RefCounted::ref(); }
     void deref() const final { RefCounted::deref(); }
-
-    void next(JSC::JSValue);
-    void complete();
-    void error(JSC::JSValue);
-    void addTeardown(Ref<VoidCallback>);
-
-    bool active() { return m_active; }
-    AbortSignal& signal() { return m_signal.get(); }
-
-    static Ref<Subscriber> create(ScriptExecutionContext&, Ref<InternalObserver>&&, const SubscribeOptions&);
-
+    static Ref<Subscriber> create(ScriptExecutionContext&, Observable&);
     ~Subscriber();
-
+    void next(JSC::JSValue);
+    void complete(const TerminationConfig& = { });
+    void error(JSC::JSValue, const TerminationConfig& = { });
+    void deliverRetainedTerminal(bool, JSC::JSValue);
+    void addTeardown(Ref<VoidCallback>);
+    void addNativeTeardown(Function<void()>&&);
+    void setAlgorithm(Ref<ObservableAlgorithm>&&);
+    bool active() const { return m_active; }
+    bool isActive() const;
+    AbortSignal& signal() { return m_signal.get(); }
+    Observable& owner() const { return m_owner.get(); }
+    void addObservation(Ref<ObservableObservation>&&);
+    void cancelObservation(ObservableObservation&, JSC::JSValue);
     void reportErrorObject(JSC::JSValue);
-
-    // JSCustomMarkFunction; for JSSubscriberCustom
     template<typename Visitor> void visitAdditionalChildrenInGCThread(Visitor&);
-
 private:
-    explicit Subscriber(ScriptExecutionContext&, Ref<InternalObserver>&&, const SubscribeOptions&);
-
-    void followSignal(AbortSignal&);
-    void close(JSC::JSValue);
-
-    bool isActive() const
-    {
-        return m_active && !isInactiveDocument();
-    }
-
-    bool isInactiveDocument() const;
-
-    // ActiveDOMObject
-    void stop() final
-    {
-        Locker locker { m_teardownsLock };
-        m_teardowns.clear();
-    }
+    Subscriber(ScriptExecutionContext&, Observable&);
+    void terminate(bool isError, JSC::JSValue, bool close);
+    void close(JSC::JSValue = JSC::jsUndefined());
+    void didChange();
+    void stop() final;
     bool virtualHasPendingActivity() const final { return m_active; }
-
-    bool m_active = true;
-    Lock m_teardownsLock;
+    bool isInactiveDocument() const;
+    bool m_active { true };
+    mutable Lock m_algorithmLock;
+    RefPtr<ObservableAlgorithm> m_algorithm WTF_GUARDED_BY_LOCK(m_algorithmLock);
+    const Ref<Observable> m_owner;
     const Ref<AbortSignal> m_signal;
-    const Ref<InternalObserver> m_observer;
-    SubscribeOptions m_options;
-    Vector<Ref<VoidCallback>> m_teardowns WTF_GUARDED_BY_LOCK(m_teardownsLock);
+    mutable Lock m_observationsLock;
+    Vector<Ref<ObservableObservation>> m_observations WTF_GUARDED_BY_LOCK(m_observationsLock);
+    Vector<Ref<ObservableObservation>> m_terminalObservations WTF_GUARDED_BY_LOCK(m_observationsLock);
+    mutable Lock m_teardownsLock;
+    using Teardown = Variant<Ref<VoidCallback>, Function<void()>>;
+    Vector<Teardown> m_teardowns WTF_GUARDED_BY_LOCK(m_teardownsLock);
+    Vector<Teardown> m_executingTeardowns WTF_GUARDED_BY_LOCK(m_teardownsLock);
 };
-
-} // namespace WebCore
+}

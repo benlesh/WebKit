@@ -1,0 +1,17 @@
+
+PASS Observable: no declared shared sources normalizes to null without starting work
+PASS Observable: declarations are copied, deduplicated in input order, and shallowly frozen
+PASS Observable: declared shared sources must be SharedObservable instances
+PASS SharedObservable: no declared shared sources normalizes to null without starting work
+PASS SharedObservable: declarations are copied, deduplicated in input order, and shallowly frozen
+PASS SharedObservable: declared shared sources must be SharedObservable instances
+PASS Metadata propagates nearest shared boundaries and combines takeUntil inputs in order
+PASS Hidden closure resources and dynamic inner sources do not automatically declare ancestry
+PASS activeSubscribers includes internal operator observations and updates synchronously
+PASS replayValues is a frozen, shallow snapshot, independent of later eviction and reset
+PASS activeSubscribers includes nested closed-replay observations until their terminal delivery
+PASS A wrapper owns one upstream observation and releases it after its last consumer cancels
+PASS A wrapper resetting after source complete closure clears only its own replay history
+PASS A wrapper resetting after source error closure clears only its own replay history
+PASS maxReplayValues exposes normalized zero and the maximum accepted capacity
+

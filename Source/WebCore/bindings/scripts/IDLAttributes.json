@@ -157,6 +157,9 @@
         "CustomSetter": {
             "contextsAllowed": ["attribute"]
         },
+        "ConstructorWithoutParent": {
+            "contextsAllowed": ["interface"]
+        },
         "CustomToJSObject": {
             "contextsAllowed": ["interface"]
         },

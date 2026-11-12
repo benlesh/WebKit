@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<!-- webkit-test-runner [ ObservableEnabled=true ] -->
+<meta charset="utf-8">
+<script src="../../resources/testharness.js"></script>
+<script src="../../resources/testharnessreport.js"></script>
+<script>
+
+test(() => {
+    assert_equals(Object.getPrototypeOf(SharedObservable), Function.prototype);
+    assert_equals(Object.getPrototypeOf(SharedObservable.prototype), Observable.prototype);
+    assert_equals(SharedObservable.from, undefined);
+    class Derived extends SharedObservable { }
+    const source = new Derived(s => s.complete());
+    assert_true(source instanceof Derived);
+    assert_true(source instanceof SharedObservable);
+    assert_true(source instanceof Observable);
+    assert_equals(Observable.from(source), source);
+    const ordinary = source.map(x => x);
+    assert_equals(Object.getPrototypeOf(ordinary), Observable.prototype);
+    assert_array_equals(ordinary.sharedSources, [source]);
+    assert_true(Object.isFrozen(ordinary.sharedSources));
+}, 'SharedObservable instance inheritance does not inherit static Observable.from');
+
+test(() => {
+    const getter = Object.getOwnPropertyDescriptor(SharedObservable.prototype, 'replayValues').get;
+    assert_throws_js(TypeError, () => getter.call(new Observable(() => {})));
+    assert_throws_js(TypeError, () => Observable.prototype.share.call({}));
+    for (const method of ['first', 'last', 'find', 'some', 'every', 'forEach', 'reduce', 'toArray'])
+        assert_equals(Observable.prototype[method], undefined);
+}, 'Binding brands and the reduced proposal API are enforced');
+
+test(() => {
+    const log = [];
+    const config = {};
+    for (const name of ['producer', 'sharedSources', 'closeOnComplete', 'closeOnError', 'closeOnLastUnsubscribe', 'keepAliveOnLastUnsubscribe', 'maxReplayValues']) {
+        Object.defineProperty(config, name, {get() {
+            log.push(name);
+            if (name === 'producer') return () => {};
+            if (name === 'maxReplayValues') return {valueOf() { log.push('ToNumber'); return 2; }};
+            return undefined;
+        }});
+    }
+    const source = new SharedObservable(config);
+    assert_equals(source.maxReplayValues, 2);
+    assert_array_equals(log, ['producer', 'sharedSources', 'closeOnComplete', 'closeOnError', 'closeOnLastUnsubscribe', 'keepAliveOnLastUnsubscribe', 'maxReplayValues', 'ToNumber']);
+    const inherited = source.share({closeOnComplete: true});
+    assert_equals(inherited.maxReplayValues, 2);
+    assert_equals(inherited.share({maxReplayValues: undefined}), inherited);
+    assert_throws_js(TypeError, () => source.share({maxReplayValues: 1n}));
+    assert_throws_js(RangeError, () => source.share({maxReplayValues: 1.5}));
+}, 'Web IDL dictionary conversion precedes capacity normalization');
+
+</script>

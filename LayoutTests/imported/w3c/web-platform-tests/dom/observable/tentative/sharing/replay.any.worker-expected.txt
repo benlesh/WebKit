@@ -1,0 +1,16 @@
+
+PASS Replay capacity 0 retains the newest values and replays synchronously oldest first
+PASS Replay capacity 1 retains the newest values and replays synchronously oldest first
+PASS Replay capacity 2 retains the newest values and replays synchronously oldest first
+PASS Replay capacity 4 retains the newest values and replays synchronously oldest first
+PASS Joining during next with replay capacity 0 never duplicates the in-progress value
+PASS Joining during next with replay capacity 1 never duplicates the in-progress value
+PASS Cancellation during running replay suppresses remaining values and terminal notification
+PASS Cancellation during completed replay suppresses remaining values and terminal notification
+PASS Cancellation during errored replay suppresses remaining values and terminal notification
+PASS Closed complete without retained values is synchronous; an already-aborted observation is inert
+PASS Closed error without retained values is synchronous; an already-aborted observation is inert
+PASS Default complete reset clears retained history before a new execution
+PASS Default error reset clears retained history before a new execution
+PASS Default cancel reset clears retained history before a new execution
+

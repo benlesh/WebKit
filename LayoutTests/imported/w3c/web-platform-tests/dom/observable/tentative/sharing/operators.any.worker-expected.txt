@@ -1,0 +1,25 @@
+
+PASS map constructs a lazy ordinary result from shared input
+PASS filter constructs a lazy ordinary result from shared input
+PASS take constructs a lazy ordinary result from shared input
+PASS drop constructs a lazy ordinary result from shared input
+PASS takeUntil constructs a lazy ordinary result from shared input
+PASS flatMap constructs a lazy ordinary result from shared input
+PASS switchMap constructs a lazy ordinary result from shared input
+PASS inspect constructs a lazy ordinary result from shared input
+PASS catch constructs a lazy ordinary result from shared input
+PASS finally constructs a lazy ordinary result from shared input
+PASS take(): late observers get independent allowances on a shared source
+PASS Sharing after take() deliberately shares its allowance
+PASS map callback indices are per observation
+PASS filter callback indices are per observation
+PASS drop() counters are per observation
+PASS take() detaches and runs registered upstream cleanup before its final value
+PASS take(0) completes without starting the producer
+PASS take() stops reentrant extra values without stopping another shared observer
+PASS Cancellation from take() upstream teardown suppresses its pending final delivery
+PASS Side effects after the shared boundary run per observer
+PASS Side effects before the shared boundary run once
+PASS catch() can resubscribe to a reset shared source after failed-attempt cleanup
+PASS switchMap() cleans up obsolete work before invoking the replacement mapper
+

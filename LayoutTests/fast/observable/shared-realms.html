@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<!-- webkit-test-runner [ ObservableEnabled=true ] -->
+<meta charset="utf-8">
+<script src="../../resources/testharness.js"></script>
+<script src="../../resources/testharnessreport.js"></script>
+<body>
+<script>
+
+promise_test(async t => {
+    const iframe = document.createElement('iframe');
+    const loaded = new Promise(resolve => iframe.onload = resolve);
+    iframe.src = 'about:blank';
+    document.body.appendChild(iframe);
+    t.add_cleanup(() => iframe.remove());
+    await loaded;
+    const other = iframe.contentWindow;
+    const source = new other.SharedObservable(s => s.complete());
+    assert_equals(Observable.from(source), source);
+    const declared = new Observable({producer() {}, sharedSources: [source, source]});
+    assert_array_equals(declared.sharedSources, [source]);
+    const values = [];
+    await new Promise((resolve, reject) => Observable.from(other.Promise.resolve(42)).subscribe({next: x => values.push(x), error: reject, complete: resolve}));
+    assert_array_equals(values, [42]);
+    assert_throws_js(TypeError, () => Observable.from({then() {}}));
+}, 'Observable.from recognizes foreign-realm native observables and promises');
+
+promise_test(async t => {
+    const iframe = document.createElement('iframe');
+    const loaded = new Promise(resolve => iframe.onload = resolve);
+    iframe.src = 'about:blank';
+    document.body.appendChild(iframe);
+    t.add_cleanup(() => iframe.remove());
+    await loaded;
+    const log = [];
+    let sink;
+    const source = new iframe.contentWindow.SharedObservable(s => {
+        sink = s;
+        s.addTeardown(() => log.push('teardown'));
+    });
+    source.subscribe({next: () => log.push('next'), complete: () => log.push('complete')});
+    iframe.remove();
+    sink.next(1);
+    sink.complete();
+    source.subscribe(() => log.push('late'));
+    assert_array_equals(log, []);
+}, 'An inactive document neither delivers notifications nor invokes teardown script');
+
+</script>

@@ -34,6 +34,7 @@
 #include "Subscriber.h"
 #include "SubscriberCallback.h"
 #include <JavaScriptCore/JSCJSValueInlines.h>
+#include <JavaScriptCore/SlotVisitorInlines.h>
 
 namespace WebCore {
 
@@ -74,6 +75,13 @@ public:
             return invoke(subscriber);
         }
 
+        void visitJSFunctionInGCThread(JSC::AbstractSlotVisitor& visitor) final { visit(visitor); }
+        void visitJSFunctionInGCThread(JSC::SlotVisitor& visitor) final { visit(visitor); }
+        template<typename Visitor> void visit(Visitor& visitor)
+        {
+            visitor.addOpaqueRoot(m_sourceObservable.ptr());
+        }
+
     private:
         SubscriberCallbackDrop(ScriptExecutionContext& context, Ref<Observable> source, uint64_t amount)
             : SubscriberCallback(&context)
@@ -111,7 +119,7 @@ private:
 
     void visitAdditionalChildrenInGCThread(JSC::AbstractSlotVisitor& visitor) const final
     {
-        m_subscriber->visitAdditionalChildrenInGCThread(visitor);
+        visitor.addOpaqueRoot(m_subscriber.ptr());
     }
 
     InternalObserverDrop(ScriptExecutionContext& context, Ref<Subscriber> subscriber, uint64_t amount)

@@ -35,6 +35,7 @@
 #include "Subscriber.h"
 #include "SubscriberCallback.h"
 #include <JavaScriptCore/JSCJSValueInlines.h>
+#include <JavaScriptCore/SlotVisitorInlines.h>
 #include <JavaScriptCore/TopExceptionScope.h>
 
 namespace WebCore {
@@ -76,6 +77,14 @@ public:
             return invoke(subscriber);
         }
 
+        void visitJSFunctionInGCThread(JSC::AbstractSlotVisitor& visitor) final { visit(visitor); }
+        void visitJSFunctionInGCThread(JSC::SlotVisitor& visitor) final { visit(visitor); }
+        template<typename Visitor> void visit(Visitor& visitor)
+        {
+            visitor.addOpaqueRoot(m_sourceObservable.ptr());
+            m_mapper->visitJSFunctionInGCThread(visitor);
+        }
+
     private:
         SubscriberCallbackMap(ScriptExecutionContext& context, Ref<Observable> source, Ref<MapperCallback> mapper)
             : SubscriberCallback(&context)
@@ -104,7 +113,7 @@ private:
         JSC::Exception* previousException = nullptr;
         {
             auto catchScope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
-            auto result = protect(m_mapper)->invokeRethrowingException(value, m_idx);
+            auto result = protect(m_mapper)->invokeRethrowingException(value, m_idx++);
             previousException = catchScope.exception();
             if (previousException) {
                 catchScope.clearException();
@@ -112,7 +121,6 @@ private:
                 return;
             }
 
-            m_idx += 1;
 
             if (result.type() == CallbackResultType::Success)
                 protect(m_subscriber)->next(result.releaseReturnValue());
@@ -132,7 +140,7 @@ private:
 
     void visitAdditionalChildrenInGCThread(JSC::AbstractSlotVisitor& visitor) const final
     {
-        m_subscriber->visitAdditionalChildrenInGCThread(visitor);
+        visitor.addOpaqueRoot(m_subscriber.ptr());
         m_mapper->visitJSFunctionInGCThread(visitor);
     }
 
@@ -153,3 +161,4 @@ Ref<SubscriberCallback> createSubscriberCallbackMap(ScriptExecutionContext& cont
 }
 
 } // namespace WebCore
+

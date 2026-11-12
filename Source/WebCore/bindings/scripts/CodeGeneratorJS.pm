@@ -9165,7 +9165,7 @@ sub GenerateConstructorHelperMethods
 
     assert("An interface cannot inherit from another interface that is marked as [LegacyNoInterfaceObject]") if $interface->parentType && $codeGenerator->GetInterfaceExtendedAttributesFromName($interface->parentType->name)->{LegacyNoInterfaceObject};
 
-    if (!$generatingLegacyFactoryFunction and $interface->parentType) {
+    if (!$generatingLegacyFactoryFunction and $interface->parentType and !$interface->extendedAttributes->{ConstructorWithoutParent}) {
         my $parentClassName = "JS" . $interface->parentType->name;
         push(@$outputArray, "    return ${parentClassName}::getConstructor(vm, &globalObject);\n");
     } elsif (ShouldUseOrdinaryObjectPrototype($interface)) {

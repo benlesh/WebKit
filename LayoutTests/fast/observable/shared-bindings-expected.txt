@@ -1,0 +1,5 @@
+
+PASS SharedObservable instance inheritance does not inherit static Observable.from
+PASS Binding brands and the reduced proposal API are enforced
+PASS Web IDL dictionary conversion precedes capacity normalization
+
